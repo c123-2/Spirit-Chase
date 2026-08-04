@@ -2,7 +2,7 @@ using UnityEngine;
 using TMPro;
 
 /// <summary>
-/// HUD \u63a7\u5236\u5668\uff1a\u5012\u8ba1\u65f6\u3001\u9635\u8425\u8ba1\u6570\u3001\u80dc\u5229/\u5931\u8d25\u663e\u793a\u3002
+/// HUD controller: countdown, faction count, win/lose display.
 /// </summary>
 public class GameHUD : MonoBehaviour
 {
@@ -10,6 +10,8 @@ public class GameHUD : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _factionText;
     [SerializeField] private GameObject _gameOverPanel;
     [SerializeField] private TextMeshProUGUI _resultText;
+
+    private bool _gameEnded;
 
     private void Start()
     {
@@ -20,7 +22,8 @@ public class GameHUD : MonoBehaviour
         }
 
         EventManager.Instance?.On("RoleChanged", _ => UpdateFactionCount());
-        EventManager.Instance?.On("GhostWin", _ => ShowResult("\u9b3c\u80dc\u5229\uff01\u5168\u5458\u88ab\u611f\u67d3\uff01"));
+        EventManager.Instance?.On("GhostWin", _ => ShowResult("Ghosts Win!"));
+        EventManager.Instance?.On("TimeUp", _ => ShowResult("Humans Win!"));
 
         if (_gameOverPanel != null)
             _gameOverPanel.SetActive(false);
@@ -30,6 +33,7 @@ public class GameHUD : MonoBehaviour
 
     private void Update()
     {
+        if (_gameEnded) return;
         if (GameManager.Instance != null && GameManager.Instance.CurrentState == GameManager.GameState.Playing)
         {
             UpdateTimer(GameManager.Instance.RemainingTime);
@@ -52,15 +56,16 @@ public class GameHUD : MonoBehaviour
     private void UpdateFactionCount()
     {
         if (_factionText == null || PlayerManager.Instance == null) return;
-        _factionText.text = $"\u4eba\u7c7b: {PlayerManager.Instance.HumanCount}  \u9b3c: {PlayerManager.Instance.OriginalGhostCount + PlayerManager.Instance.SmallGhostCount}";
+        _factionText.text = $"Humans: {PlayerManager.Instance.HumanCount}  Ghosts: {PlayerManager.Instance.OriginalGhostCount + PlayerManager.Instance.SmallGhostCount}";
     }
 
     private void OnStateChanged(GameManager.GameState oldState, GameManager.GameState newState)
     {
-        if (newState == GameManager.GameState.GameOver)
+        if (newState == GameManager.GameState.GameOver && !_gameEnded)
         {
+            _gameEnded = true;
             if (GameManager.Instance.RemainingTime <= 0)
-                ShowResult("\u4eba\u7c7b\u80dc\u5229\uff01\u65f6\u95f4\u8017\u5c3d\uff01");
+                ShowResult("Humans Win!");
         }
     }
 
@@ -68,6 +73,7 @@ public class GameHUD : MonoBehaviour
     {
         if (_gameOverPanel != null) _gameOverPanel.SetActive(true);
         if (_resultText != null) _resultText.text = msg;
+        _gameEnded = true;
     }
 
     public void OnRetryClicked()

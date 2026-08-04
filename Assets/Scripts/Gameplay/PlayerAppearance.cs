@@ -35,16 +35,31 @@ public class PlayerAppearance : MonoBehaviour
     private void OnRoleChanged(params object[] args)
     {
         if (args.Length >= 1 && args[0] is PlayerController pc && pc == _controller)
-        {
             UpdateAppearance();
-        }
     }
 
     public void UpdateAppearance()
     {
-        if (_controller == null || _sprite == null) return;
+        if (_sprite == null) return;
 
-        _sprite.color = _controller.Role switch
+        // Determine role: check data first, then controller type
+        PlayerRole role;
+        if (_controller != null && _controller.Data != null)
+        {
+            role = _controller.Role;
+        }
+        else
+        {
+            // Fallback: detect by controller type
+            role = _controller switch
+            {
+                GhostController => PlayerRole.OriginalGhost,
+                SmallGhostController => PlayerRole.SmallGhost,
+                _ => PlayerRole.Human
+            };
+        }
+
+        _sprite.color = role switch
         {
             PlayerRole.Human => _humanColor,
             PlayerRole.OriginalGhost => _ghostColor,
