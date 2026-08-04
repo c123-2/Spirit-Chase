@@ -12,6 +12,7 @@ public class GameHUD : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _resultText;
 
     private bool _gameEnded;
+    private bool _gameStarted;
 
     private void Start()
     {
@@ -29,6 +30,18 @@ public class GameHUD : MonoBehaviour
             _gameOverPanel.SetActive(false);
 
         UpdateFactionCount();
+
+        // Auto-start the game after a brief delay
+        Invoke(nameof(StartPlaying), 1f);
+    }
+
+    private void StartPlaying()
+    {
+        if (GameManager.Instance != null && !_gameStarted)
+        {
+            _gameStarted = true;
+            GameManager.Instance.SetState(GameManager.GameState.Playing);
+        }
     }
 
     private void Update()
